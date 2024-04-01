@@ -38,7 +38,8 @@ async function checkNotifStatus(client, userId) {
 
   const token = client.session.save()
 
-  console.log("Save this token in TELEGRAM_AUTH_TOKEN:", token)
+  if (!process.env.TELEGRAM_AUTH_TOKEN)
+    console.log("=> Save this token in TELEGRAM_AUTH_TOKEN", token)
 
   async function eventPrint(event) {
     const message = event.message
