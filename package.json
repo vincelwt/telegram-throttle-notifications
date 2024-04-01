@@ -1,0 +1,21 @@
+{
+  "name": "automute",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mtproto/core": "^6.3.0",
+    "input": "^1.0.1",
+    "telegram": "^2.20.2"
+  },
+  "prettier": {
+    "semi": false
+  }
+}
