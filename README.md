@@ -1,13 +1,13 @@
 # Telegram Throttle notifications
 
-Got notification anxiety? Hate it when people send you bursts of messages making your phone buzz like crazy? This is for you.
+Got notification anxiety? Hate it when people send you bursts of messages making your phone buzz like crazy? This is for you. This script automatically throttles notifications from Telegram chats, effectively grouping notifications. Default cool-down period is 3 minutes.
 
-This script automatically throttles notifications from Telegram chats. Default period is 3 minutes.
+You will receive only 1 notification / contact / period.
 
 How it works:
 
-- When a private chat is received (and notification received), it is muted for 3 minutes
-- If you reply to the chat before that, it unmuted it
+- When a (private) chat is received (notification received), it is muted for 3 minutes
+- If you reply to the chat before that, it unmutes it
 
 ## Configuration
 
