@@ -45,12 +45,6 @@ async function checkNotifStatus(client, userId) {
 
     const { senderId, chatId } = message
 
-    console.log({
-      text: message.text,
-      senderId: message.senderId,
-      chatId: message.chatId,
-    })
-
     // Only do this w/ private message (from user or bot)
     if (!event.isPrivate) return
 
