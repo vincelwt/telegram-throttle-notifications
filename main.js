@@ -5,17 +5,27 @@ import { NewMessage } from "telegram/events/index.js"
 import dotenv from "dotenv"
 dotenv.config()
 
-const me = process.env.TELEGRAM_ME_SENDER_ID
+const me = BigInt(process.env.TELEGRAM_ME_SENDER_ID)
 
-const MUTE_FOR = 5 * 60 // 10 minutes
+const MUTE_FOR = 3 * 60 // 3 minutes
 
 const session = new StringSession(process.env.TELEGRAM_AUTH_TOKEN)
 const client = new TelegramClient(
   session,
-  process.env.TELEGRAM_API_ID,
+  parseInt(process.env.TELEGRAM_API_ID),
   process.env.TELEGRAM_API_HASH,
   {}
 )
+
+async function checkNotifStatus(client, userId) {
+  const notifySettings = await client.invoke(
+    new Api.account.GetNotifySettings({
+      peer: new Api.InputNotifyPeer({ peer: userId }),
+    })
+  )
+
+  return notifySettings
+}
 
 ;(async function run() {
   await client.start({
@@ -31,39 +41,62 @@ const client = new TelegramClient(
   async function eventPrint(event) {
     const message = event.message
 
-    // Checks if it's a private message (from user or bot)
-    if (!event.isPrivate || message.senderId === me) return
-    // prints sender id
-    // console.log(message.senderId)
+    const { senderId, chatId } = message
 
-    const notifySettings = await client.invoke(
-      new Api.account.GetNotifySettings({
-        peer: new Api.InputNotifyPeer({ peer: message.senderId }),
-      })
+    console.log({
+      text: message.text,
+      senderId: message.senderId,
+      chatId: message.chatId,
+    })
+
+    // Only do this w/ private message (from user or bot)
+    if (!event.isPrivate) return
+
+    const { silent, muteUntil } = await checkNotifStatus(
+      client,
+      message.chatId.value
     )
 
-    console.log(
-      `Received message from ${message.senderId} with silent: ${notifySettings.silent}`
-    )
+    console.log(`Muted: ${silent}, until: ${muteUntil}`)
 
-    // When receiving 2 messages from the same sender, mute him for 10 minutes
-    if (!notifySettings.silent) {
-      const inTenMinutes = parseInt(Date.now() / 1000) + MUTE_FOR
+    // Check if the chat is muted
+    const isMuted = silent || muteUntil > 0
+
+    // Check if the chat is muted by the script (expire time matches the MUTE_FOR)
+    const isMutedViaScript =
+      muteUntil > 0 && muteUntil < Math.round(Date.now() / 1000) + MUTE_FOR
+
+    // Received a message from someone else that's not muted => mute it
+    if (senderId.value !== me && !isMuted) {
+      console.log(`Muting ${senderId.value} with silent`)
+
+      const muteUntil = Math.round(Date.now() / 1000) + MUTE_FOR
 
       const result = await client.invoke(
         new Api.account.UpdateNotifySettings({
-          peer: new Api.InputNotifyPeer({ peer: message.senderId }),
+          peer: new Api.InputNotifyPeer({ peer: senderId }),
           settings: new Api.InputPeerNotifySettings({
-            muteUntil: inTenMinutes,
+            muteUntil,
           }),
         })
       )
 
-      lastSenderId = null
+      console.log("result", result)
+    } else if (senderId.value === me && isMutedViaScript) {
+      // I sent a message to a muted chat => unmute it
+      console.log(`Unmuting chat ${chatId.value}`)
+
+      const result = await client.invoke(
+        new Api.account.UpdateNotifySettings({
+          peer: new Api.InputNotifyPeer({ peer: chatId }),
+          settings: new Api.InputPeerNotifySettings({
+            silent: false,
+            muteUntil: 0,
+          }),
+        })
+      )
 
       console.log("result", result)
-    } else if (!notifySettings.silent) {
-      lastSenderId = message.senderId.value
     }
   }
   // adds an event handler for new messages
