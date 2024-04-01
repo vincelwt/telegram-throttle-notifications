@@ -7,7 +7,9 @@ dotenv.config()
 
 const me = BigInt(process.env.TELEGRAM_ME_SENDER_ID)
 
-const MUTE_FOR = 3 * 60 // 3 minutes
+const MUTE_FOR = process.env.TELEGRAM_THROTTLE_DURATION
+  ? parseInt(process.env.TELEGRAM_THROTTLE_DURATION)
+  : 3 * 60 // 3 minutes
 
 const session = new StringSession(process.env.TELEGRAM_AUTH_TOKEN)
 const client = new TelegramClient(
